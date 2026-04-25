@@ -1,8 +1,6 @@
 package com.esport.esport.config;
 
 import com.esport.esport.security.JwtFilter;
-import com.esport.esport.security.CustomUserDetailsService;
-
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
@@ -12,7 +10,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,78 +32,68 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
-    private final CustomUserDetailsService userDetailsService;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         return http
-                // ❌ CSRF désactivé (API REST)
                 .csrf(csrf -> csrf.disable())
 
-                // ✅ CORS
                 .cors(cors -> cors.configurationSource(corsConfig()))
 
-                // ❌ pas de session (JWT)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // 🔐 règles d’accès
                 .authorizeHttpRequests(auth -> auth
 
-                        // ✅ PUBLIC
+                        // 🔓 PUBLIC
+                        .requestMatchers("/api/ranking/**").permitAll()
+                        .requestMatchers("/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/competitions/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/ranking/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
-                        // 🔴 ADMIN
-                        .requestMatchers(HttpMethod.POST, "/api/games").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/games/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasRole("ADMIN")
+                        // 🔴 ADMIN ONLY
+                        .requestMatchers(HttpMethod.POST, "/api/games").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/games/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasAuthority("ROLE_ADMIN")
 
-                        // 🔐 AUTHENTICATED
+
+
+                        // 🔐 AUTH REQUIRED
                         .anyRequest().authenticated()
                 )
 
-                // 🔥 JWT FILTER
-                .addFilterBefore(jwtFilter,
-                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 
-                // ✅ H2 console iframe FIX
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable())
-                )
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
 
                 .build();
     }
 
-    // 🔐 Encoder password
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 🔐 Auth manager
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // 🌐 CORS config
     @Bean
     public CorsConfigurationSource corsConfig() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173")); // React/Vite
+        config.setAllowedOrigins(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
 
         return source;
