@@ -25,5 +25,10 @@ public class CompetitionService {
                 .orElseThrow(() -> new RuntimeException("Compétition introuvable"));
 
         // logique future: ajouter user + check maxPlayers
+
+    }
+
+    public void delete(Long id) {
+        competitionRepository.deleteById(id);
     }
 }

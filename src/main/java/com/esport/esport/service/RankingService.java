@@ -1,5 +1,4 @@
 package com.esport.esport.service;
-
 import com.esport.esport.model.Score;
 import com.esport.esport.model.Competition;
 
@@ -20,9 +19,10 @@ public class RankingService {
     private final CompetitionRepository competitionRepository;
 
     // Classement global — somme de tous les points de chaque joueur
-    public List<Object[]> getGlobalRanking() {
-        return scoreRepository.findGlobalRanking();
+     public List<Object[]> getGlobalRanking() {
+      return scoreRepository.findGlobalRanking();
     }
+
 
     // Classement d'une compétition spécifique
     public List<Score> getCompetitionRanking(Long competitionId) {

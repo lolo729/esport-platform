@@ -29,4 +29,9 @@ public class CompetitionController {
         competitionService.joinCompetition(id);
         return ResponseEntity.ok("Inscription réussie");
     }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        competitionService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }

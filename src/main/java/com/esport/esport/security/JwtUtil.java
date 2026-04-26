@@ -10,6 +10,7 @@ import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+
 @Component
 public class JwtUtil {
 
@@ -26,6 +27,7 @@ public class JwtUtil {
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("role", userDetails.getAuthorities().iterator().next().getAuthority())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
@@ -34,22 +36,34 @@ public class JwtUtil {
 
     public String extractUsername(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey()).build()
+                .verifyWith(getSigningKey())
+                .build()
                 .parseSignedClaims(token)
-                .getPayload().getSubject();
+                .getPayload()
+                .getSubject();
+    }
+
+    public String extractRole(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername())
+        return extractUsername(token).equals(userDetails.getUsername())
                 && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey()).build()
+                .verifyWith(getSigningKey())
+                .build()
                 .parseSignedClaims(token)
-                .getPayload().getExpiration()
+                .getPayload()
+                .getExpiration()
                 .before(new Date());
     }
 }
