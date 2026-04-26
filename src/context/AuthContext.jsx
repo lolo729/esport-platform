@@ -8,12 +8,15 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Décoder le user depuis le token au démarrage
   useEffect(() => {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
-        setUser({ email: payload.sub, role: payload.role });
+
+        setUser({
+          email: payload.sub,
+          role: payload.role,
+        });
       } catch {
         logout();
       }
@@ -25,6 +28,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authService.login({ email, password });
       const newToken = res.data.token;
+
       localStorage.setItem("token", newToken);
       setToken(newToken);
     } finally {
@@ -37,6 +41,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authService.register({ username, email, password });
       const newToken = res.data.token;
+
       localStorage.setItem("token", newToken);
       setToken(newToken);
     } finally {
@@ -50,11 +55,19 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === "ROLE_ADMIN";
 
   return (
     <AuthContext.Provider
-      value={{ token, user, loading, login, register, logout, isAdmin }}
+      value={{
+        token,
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        isAdmin,
+      }}
     >
       {children}
     </AuthContext.Provider>
@@ -62,4 +75,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
-export default AuthContext;
